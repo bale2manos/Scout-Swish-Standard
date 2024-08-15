@@ -176,3 +176,4 @@ for filename in os.listdir(folder):
 # Save to Excel
 save_to_excel(data, 'player_data.xlsx')
 print('Data saved to player_data.xlsx')
+
