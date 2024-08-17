@@ -2,24 +2,28 @@
 import os
 from stats import process_images, get_team_stats
 from crop_image import get_player_name, crop_image_to_second_third_row, crop_image_to_second_fifth_row
+from media import screenshot_window_by_title
 
 
 def main():
     # Example usage of process_images
-    folder_path = './Pintobasket'
+    folder_path = './Villa de Aranjuez - 2011 Fem'
 
-    """
+    # Create a folder if it doesn't exist
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+
     # Specify the window title to capture
     window_title = "BlueStacks App Player"
-    n_players = 17
-    screenshot_window_by_title(window_title, n_players)
-    """
-   
+    n_players = 14 # TODO Change this to the input
+    screenshot_window_by_title(window_title, n_players, folder_path)
+
 
     # Create a Stats folder if it doesn't exist
     if not os.path.exists(f'{folder_path}/Stats Cropped'):
         os.makedirs(f'{folder_path}/Stats Cropped')
-    # Create a directory inside PintoBasket called Results
+    # Create a directory inside the folder called Results
     if not os.path.exists(f'{folder_path}/Results'):
         os.makedirs(f'{folder_path}/Results')
 

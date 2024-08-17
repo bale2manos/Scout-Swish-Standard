@@ -85,7 +85,7 @@ def create_temp_copy(image_path):
 
 def extract_text(image):
     image_pil = Image.fromarray(image)
-    custom_config = r'--oem 3 --psm 11 -c tessedit_char_whitelist=0123456789.:%'
+    custom_config = r'--oem 3 --psm 11 -c tessedit_char_whitelist=0123456789.:%-'
 
     extracted_text = pytesseract.image_to_string(image_pil, config=custom_config)
     return extracted_text
@@ -118,6 +118,10 @@ def extract_data_from_text(text, player_name):
     check_over_5_PF(lines)
     check_over_50_over_under(lines)
 
+    double_check_points(lines)
+
+
+
 
     for i in range(len(lines)):
         if i < len(sections):
@@ -135,11 +139,14 @@ def clean_text_and_remove_excess(text):
     lines = text.split('\n')
     lines = [line for line in lines if line]
 
+    print("Lines: ", lines)
+
     if lines[0] == '0':
         return
 
     # Remove points because they are repeated
     if len(lines) > 1:
+        lines[3] = lines[1]
         lines.pop(1)
 
     # Join lines into one string
@@ -148,6 +155,7 @@ def clean_text_and_remove_excess(text):
         text = text.replace('%', '%\n')
     lines = text.split('\n')
     lines = [line for line in lines if line]
+
     return lines
 
 def check_over_50_over_under(lines):
@@ -158,9 +166,22 @@ def check_over_50_over_under(lines):
         else:
             lines[7] = lines[7][:1] + '.' + lines[7][1:]
 
+def check_over_40_points(lines):
+    if len(lines) > 2 and float(lines[2]) > 40:
+        # Add a decimal point after the first character
+        lines[2] = lines[2][:1] + '.' + lines[2][1:]
+
+    # If the number has more than 1 digit and starts with 0, add a decimal point after the first character
+    if len(lines) > 2 and len(lines[2]) > 1 and lines[2][0] == '0' and lines[2][1] != '.':
+        lines[2] = lines[2][:1] + '.' + lines[2][1:]
+
 def check_over_5_PF(lines):
     if len(lines) > 6 and float(lines[6]) > 5:
         # Add a decimal point after the first character
+        lines[6] = lines[6][:1] + '.' + lines[6][1:]
+
+    # If the number has more than 1 digit and starts with 0, add a decimal point after the first character
+    if len(lines) > 6 and len(lines[6]) > 1 and lines[6][0] == '0' and lines[6][1] != '.':
         lines[6] = lines[6][:1] + '.' + lines[6][1:]
 
 
@@ -168,24 +189,54 @@ def check_over_20_3P(lines):
     if len(lines) > 5 and float(lines[5]) > 20:
         # Add a decimal point after the first character
         lines[5] = lines[5][:1] + '.' + lines[5][1:]
+    elif len(lines) > 5 and float(lines[5]) * 3 > float(lines[2]):
+        # Add a decimal point after the first character
+        lines[5] = lines[5][:1] + '.' + lines[5][1:]
+    elif len(lines) > 5 and float(lines[5]) * 3 == float(lines[2]) and (float(lines[4]) != 0 or float(lines[3]) != 0):
+        # Add a decimal point after the first character
+        lines[5] = lines[5][:1] + '.' + lines[5][1:]
+
+    # If the number has more than 1 digit and starts with 0, add a decimal point after the first character
+    if len(lines) > 3 and len(lines[5]) > 1 and lines[5][0] == '0' and lines[5][1] != '.':
+        lines[5] = lines[5][:1] + '.' + lines[5][1:]
 
 
 def check_over_20_2FG(lines):
     if len(lines) > 4 and float(lines[4]) > 20:
         # Add a decimal point after the first character
         lines[4] = lines[4][:1] + '.' + lines[4][1:]
+    elif len(lines) > 4 and float(lines[4]) * 2 > float(lines[2]):
+        # Add a decimal point after the first character
+        lines[4] = lines[4][:1] + '.' + lines[4][1:]
+    elif len(lines) > 4 and float(lines[4]) * 2 == float(lines[2]) and (float(lines[3]) != 0 or float(lines[5]) != 0):
+        # Add a decimal point after the first character
+        lines[4] = lines[4][:1] + '.' + lines[4][1:]
+
+    # If the number has more than 1 digit and starts with 0, add a decimal point after the first character
+    if len(lines) > 3 and len(lines[4]) > 1 and lines[4][0] == '0' and lines[4][1] != '.':
+        lines[4] = lines[4][:1] + '.' + lines[4][1:]
+
 
 
 def check_over_30_FT(lines):
     if len(lines) > 3 and float(lines[3]) > 30:
         # Add a decimal point after the first character
         lines[3] = lines[3][:1] + '.' + lines[3][1:]
-
-
-def check_over_40_points(lines):
-    if len(lines) > 2 and float(lines[2]) > 40:
+    elif len(lines) > 3 and float(lines[3]) > float(lines[2]):
         # Add a decimal point after the first character
-        lines[2] = lines[2][:1] + '.' + lines[2][1:]
+        lines[3] = lines[3][:1] + '.' + lines[3][1:]
+        print("Free throws are over the total points")
+    elif len(lines) > 3 and float(lines[3]) == float(lines[2]) and (float(lines[4]) != 0 or float(lines[5]) != 0):
+        # Add a decimal point after the first character
+        lines[3] = lines[3][:1] + '.' + lines[3][1:]
+        print("Free throws are equal to the total points")
+
+    # If the number has more than 1 digit and starts with 0, add a decimal point after the first character
+    if len(lines) > 3 and len(lines[3]) > 1 and lines[3][0] == '0' and lines[3][1] != '.':
+        lines[3] = lines[3][:1] + '.' + lines[3][1:]
+
+
+
 
 
 def check_minutes(lines):
@@ -196,6 +247,21 @@ def check_minutes(lines):
         lines.insert(2, lines[1][5:])
         # Remove the numbers from the first line
         lines[1] = lines[1][:5]
+
+def double_check_points(lines):
+    if len(lines) > 5:
+        free_throws_pts = float(lines[3]) * 1
+        two_points_pts = float(lines[4]) * 2
+        three_points_pts = float(lines[5]) * 3
+        total_points = float(lines[2])
+        # I want to check if the points match but give a certain amount of possible error, up to 1 point
+        if abs(free_throws_pts + two_points_pts + three_points_pts - total_points) > 1:
+            print("Points don't match")
+            print(f"Free throws: {free_throws_pts}, 2 points: {two_points_pts}, 3 points: {three_points_pts}, total: {total_points}")
+            # Add a decimal point after the first character
+            lines[2] = lines[2][:1] + '.' + lines[2][1:]
+
+
 
 
 def time_to_seconds(time_str):
@@ -322,8 +388,3 @@ def get_team_stats(image_path):
 
     print(data)
     return data
-
-
-
-if __name__ == "__main__":
-    get_team_stats(".\PintoBasket\Stats Cropped\GENERAL_STATS.png")

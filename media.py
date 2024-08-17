@@ -80,19 +80,19 @@ def point_last_player(bottom, left, right, top):
     player_offset = 4 * (bottom - top) // 9
     pyautogui.moveTo(left + (right - left) // 6, top + (bottom - top) // 2 + player_offset)
 
-def get_team_stats_photo(bottom, left, right, top):
+def get_team_stats_photo(bottom, left, right, top, folder_path):
     # Take a screenshot of the region corresponding to the window
     time.sleep(2)
     screenshot = pyautogui.screenshot(region=(left, top, right - left, bottom - top))
 
     # Save the screenshot
-    filepath = f"./PintoBasket/GENERAL_STATS_temp.png"
-    screenshot.save(filepath)
+    file_path = f"{folder_path}/GENERAL_STATS_temp.png"
+    screenshot.save(file_path)
 
 
 
 
-def screenshot_window_by_title(window_title, n_players):
+def screenshot_window_by_title(window_title, n_players, folder_path):
     # Get the window handle for the specified title
     hwnds = gw.getWindowsWithTitle(window_title)
     if hwnds:
@@ -106,14 +106,14 @@ def screenshot_window_by_title(window_title, n_players):
         bring_window_to_front(hwnd)
 
         # Get team stats
-        get_team_stats_photo(bottom, left, right, top)
+        get_team_stats_photo(bottom, left, right, top, folder_path)
 
         # Move the mouse to the top-left corner of the window
         i=1
         for i in range(1, min(n_players+1, 6)):
             print(f"Player {i}")
             move_mouse_to_player(hwnd,i, left, top, right, bottom)
-            take_screenshot(bottom, left, right, top)
+            take_screenshot(bottom, left, right, top, folder_path)
             time.sleep(2)
 
             # Go back to the team window
@@ -124,7 +124,7 @@ def screenshot_window_by_title(window_title, n_players):
             print(f"Player {i}")
             slide_next_player(bottom, left, right, top)
             move_mouse_to_player(hwnd, 5, left, top, right, bottom)
-            take_screenshot(bottom, left, right, top)
+            take_screenshot(bottom, left, right, top, folder_path)
             time.sleep(2)
             # Go back to the team window
             click_back_button(bottom, left, right, top)
@@ -136,13 +136,13 @@ def screenshot_window_by_title(window_title, n_players):
     else:
             print(f"Window with title '{window_title}' not found.")
 
-def take_screenshot(bottom, left, right, top):
+def take_screenshot(bottom, left, right, top, folder_path):
     # Take a screenshot of the region corresponding to the window
     time.sleep(0.5)
     screenshot = pyautogui.screenshot(region=(left, top, right - left, bottom - top))
 
     # Save the screenshot
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    file_path = f"PintoBasket/Screenshot_{timestamp}.png"
+    file_path = f"{folder_path}/Screenshot_{timestamp}.png"
     screenshot.save(file_path)
 
