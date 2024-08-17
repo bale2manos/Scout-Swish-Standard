@@ -2,9 +2,13 @@ import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
-from stats import process_images, get_team_stats
-from crop_image import get_player_name, crop_image_to_second_third_row, crop_image_to_second_fifth_row
-from media import screenshot_window_by_title
+
+from code.media.process_image import process_images, get_team_stats
+from code.media.image_to_text import get_player_name
+from code.media.cropping import crop_image_to_second_third_row, crop_image_to_second_fifth_row
+from code.devices.windows import screenshot_window_by_title
+
+
 
 def browse_folder():
     folder_selected = filedialog.askdirectory()
