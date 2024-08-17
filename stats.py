@@ -63,7 +63,6 @@ def preprocess_image(image_path):
     # Resize for better OCR accuracy
     scaled_image = cv2.resize(inverted_image, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
 
-
     # Optionally remove the temporary file if you no longer need it
     os.remove(temp_path)
 
@@ -110,6 +109,8 @@ def extract_data_from_text(text, player_name):
                 data[sections[i]] = '0'
         return data
 
+    print("Lines after cleaning: ", lines)
+
     check_minutes(lines)
     check_over_40_points(lines)
     check_over_30_FT(lines)
@@ -139,15 +140,29 @@ def clean_text_and_remove_excess(text):
     lines = text.split('\n')
     lines = [line for line in lines if line]
 
-    print("Lines: ", lines)
+    print("Lines originally: ", lines)
 
     if lines[0] == '0':
         return
 
-    # Remove points because they are repeated
+    print("Lines after removing 0: ", lines)
+    # Remove points because they are repeated, remove lines [1]
     if len(lines) > 1:
-        lines[3] = lines[1]
-        lines.pop(1)
+        # If there are more than 2 numbers after the colon, add the next numbers into a new cell in lines list
+        if len(lines) > 2 and len(lines[2]) > 5:
+            # Remove the numbers from the second line
+            print("MINUTOS MAL: ", lines[2])
+            lines[2] = lines[2][:5]
+            aux = lines[2]
+            lines[2] = lines[1]
+            lines[1] = aux
+        else:
+            print("MINUTOS BIEN: ", lines[2])
+            lines[3] = lines[1]
+            lines.pop(1)
+
+
+    print("Lines after removing duplicated points: ", lines)
 
     # Join lines into one string
     text = '\n'.join(lines)
@@ -236,9 +251,6 @@ def check_over_30_FT(lines):
         lines[3] = lines[3][:1] + '.' + lines[3][1:]
 
 
-
-
-
 def check_minutes(lines):
     if len(lines) > 1 and ':' not in lines[1]:
         # After the first two chars, add the colon
@@ -247,6 +259,8 @@ def check_minutes(lines):
         lines.insert(2, lines[1][5:])
         # Remove the numbers from the first line
         lines[1] = lines[1][:5]
+
+    print("Lines after minutes check: ", lines)
 
 def double_check_points(lines):
     if len(lines) > 5:
@@ -385,6 +399,13 @@ def get_team_stats(image_path):
     for i in range(len(lines)):
         if i < len(sections):
             data[sections[i]] = lines[i]
+
+    # Check not over 150 points scored or received
+    if ('Avg Points Scored' in data) and float(data['Avg Points Scored']) > 150:
+            data['Avg Points Scored'] = data['Avg Points Scored'][:2] + '.' + data['Avg Points Scored'][2:]
+
+    if ('Avg Points Received' in data) and float(data['Avg Points Received']) > 150:
+        data['Avg Points Received'] = data['Avg Points Received'][:2] + '.' + data['Avg Points Received'][2:]
 
     print(data)
     return data
