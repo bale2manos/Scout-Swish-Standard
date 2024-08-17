@@ -8,8 +8,6 @@ from code.media.image_to_text import get_player_name
 from code.media.cropping import crop_image_to_second_third_row, crop_image_to_second_fifth_row
 from code.devices.windows import screenshot_window_by_title
 
-
-
 def browse_folder():
     folder_selected = filedialog.askdirectory()
     folder_path_entry.delete(0, tk.END)
@@ -17,17 +15,61 @@ def browse_folder():
 
 def toggle_advanced_mode():
     if advanced_mode_var.get():
-        window_title_frame.grid(row=3, column=0, columnspan=3, padx=20, pady=10)
+        # Increase the window height to accommodate the additional fields
+        root.geometry(f"{window_width}x{window_height + 120}+{x_cordinate}+{y_cordinate}")
+        window_title_frame.grid(row=3, column=0, columnspan=3, padx=20, pady=10, sticky='ew')
+        tesseract_path_frame.grid(row=4, column=0, columnspan=3, padx=20, pady=10, sticky='ew')
+        advanced_button.config(text="Hide Advanced Mode")
     else:
         window_title_frame.grid_forget()
+        tesseract_path_frame.grid_forget()
+        root.geometry(f"{window_width}x{window_height}+{x_cordinate}+{y_cordinate}")
+        advanced_button.config(text="Show Advanced Mode")
+
+    # Ensure the Start Process button is always at the bottom
+    root.update_idletasks()
+    start_button.grid(row=5 if advanced_mode_var.get() else 4, column=0, columnspan=3, pady=20)
+
+def show_error(message):
+    error_window = tk.Toplevel(root)
+    error_window.title("Error")
+    error_window.geometry("400x150")
+    error_window.configure(background='#F8D7DA')
+
+    # Create a Label with word wrapping
+    message_label = ttk.Label(error_window, text=message, font=('Helvetica', 12), foreground='#721C24', background='#F8D7DA', wraplength=360)
+    message_label.pack(pady=20, padx=20, fill='x', expand=True)
+
+    # Create an OK button
+    ok_button = ttk.Button(error_window, text="OK", command=error_window.destroy)
+    ok_button.pack(pady=10)
+
+    # Ensure the label takes up the available width
+    message_label.update_idletasks()
 
 def start_process():
     folder_path = folder_path_entry.get()
-    n_players = int(players_entry.get())
+    n_players_str = players_entry.get()
     window_title = window_title_entry.get()
+    tesseract_path = tesseract_path_entry.get()
 
-    if not folder_path or not n_players or not window_title:
-        messagebox.showerror("Input Error", "Please fill in all fields.")
+    # Validate inputs
+    if not folder_path:
+        show_error("Folder path cannot be empty.")
+        return
+
+    if not n_players_str.isdigit() or int(n_players_str) < 1:
+        show_error("Number of players must be a number greater than 0.")
+        return
+
+    n_players = int(n_players_str)
+
+    if not window_title:
+        show_error("Window title cannot be empty.")
+        return
+
+    if not tesseract_path:
+        show_error("Tesseract path cannot be empty.")
         return
 
     # Ensure the folder exists
@@ -49,7 +91,7 @@ def start_process():
         if filename.lower().endswith(('.png', '.jpg', '.jpeg')) and filename != 'GENERAL_STATS_temp.png':
             image_path = os.path.join(folder_path, filename)
             try:
-                player_name = get_player_name(image_path, f'{folder_path}/temp.png')
+                player_name = get_player_name(image_path, f'{folder_path}/temp.png', tesseract_path)
                 player_stats_output_path = f'{folder_path}/Stats Cropped/{player_name}.png'
                 crop_image_to_second_third_row(image_path, player_stats_output_path)
             except Exception as e:
@@ -111,11 +153,12 @@ players_label.grid(row=2, column=0, padx=20, pady=10)
 players_entry = ttk.Entry(root, width=10)
 players_entry.grid(row=2, column=1, padx=20, pady=10)
 
-# Window title in advanced mode
-advanced_mode_var = tk.BooleanVar()
-advanced_check = ttk.Checkbutton(root, text="Advanced Mode", variable=advanced_mode_var, command=toggle_advanced_mode)
-advanced_check.grid(row=3, column=0, columnspan=3, pady=10)
+# Advanced mode button
+advanced_mode_var = tk.BooleanVar(value=False)
+advanced_button = ttk.Button(root, text="Show Advanced Mode", command=lambda: advanced_mode_var.set(not advanced_mode_var.get()) or toggle_advanced_mode())
+advanced_button.grid(row=3, column=0, columnspan=3, pady=10)
 
+# Window Title Frame
 window_title_frame = ttk.Frame(root)
 window_title_label = ttk.Label(window_title_frame, text="Window Title:")
 window_title_label.grid(row=0, column=0, padx=20, pady=10)
@@ -123,13 +166,22 @@ window_title_entry = ttk.Entry(window_title_frame, width=50)
 window_title_entry.grid(row=0, column=1, padx=20, pady=10)
 window_title_entry.insert(0, "BlueStacks App Player")
 
+# Tesseract Path Frame
+tesseract_path_frame = ttk.Frame(root)
+tesseract_path_label = ttk.Label(tesseract_path_frame, text="Tesseract Path:")
+tesseract_path_label.grid(row=0, column=0, padx=20, pady=10)
+tesseract_path_entry = ttk.Entry(tesseract_path_frame, width=50)
+tesseract_path_entry.grid(row=0, column=1, padx=20, pady=10)
+tesseract_path_entry.insert(0, r'F:/Programas/Tesseract-OCR/tesseract.exe')
+
 # Start button
 start_button = ttk.Button(root, text="Start Process", command=start_process)
 start_button.grid(row=4, column=0, columnspan=3, pady=20)
 
-# Adjust the root window size to fit all widgets
-root.update_idletasks()  # Update "requested size" from all widgets
-root.geometry(f"{root.winfo_reqwidth()}x{root.winfo_reqheight()+20}+{x_cordinate}+{y_cordinate}")
+# Configure grid row weights to adjust layout when expanding
+root.grid_rowconfigure(3, weight=1)  # Advanced mode row
+root.grid_rowconfigure(4, weight=1)  # Advanced mode rows
+root.grid_rowconfigure(5, weight=1)  # Start button row
 
 # Main loop
 root.mainloop()

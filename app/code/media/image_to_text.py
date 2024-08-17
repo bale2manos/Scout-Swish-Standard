@@ -5,7 +5,7 @@ import os
 from ..media.cropping import crop_image_to_top
 from ..utils.utils import remove_initial_wrong_chars
 
-tesseract_cmd_path = r'F:/Programas/Tesseract-OCR/tesseract.exe'
+
 
 
 def read_text_from_image(image_path, tesseract_cmd_path):
@@ -45,7 +45,7 @@ def read_text_from_image(image_path, tesseract_cmd_path):
     return text
 
 
-def get_player_name(image_path,output_path):
+def get_player_name(image_path,output_path, tesseract_cmd_path):
     crop_image_to_top(image_path, output_path)
     return read_text_from_image(output_path, tesseract_cmd_path)
 
